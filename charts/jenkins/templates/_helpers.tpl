@@ -117,55 +117,6 @@ jenkins:
     {{- else }}
     {{- toYaml .Values.controller.markupFormatter | nindent 4 }}
     {{- end }}
-  clouds:
-  - kubernetes:
-      containerCapStr: "{{ .Values.agent.containerCap }}"
-      defaultsProviderTemplate: "{{ .Values.agent.defaultsProviderTemplate }}"
-      connectTimeout: "{{ .Values.agent.kubernetesConnectTimeout }}"
-      readTimeout: "{{ .Values.agent.kubernetesReadTimeout }}"
-      {{- if .Values.agent.jenkinsUrl }}
-      jenkinsUrl: "{{ tpl .Values.agent.jenkinsUrl . }}"
-      {{- else }}
-      jenkinsUrl: "http://{{ template "jenkins.fullname" . }}.{{ template "jenkins.namespace" . }}.svc.{{.Values.clusterZone}}:{{.Values.controller.servicePort}}{{ default "" .Values.controller.jenkinsUriPrefix }}"
-      {{- end }}
-      {{- if not .Values.agent.websocket }}
-      {{- if .Values.agent.jenkinsTunnel }}
-      jenkinsTunnel: "{{ tpl .Values.agent.jenkinsTunnel . }}"
-      {{- else }}
-      jenkinsTunnel: "{{ template "jenkins.fullname" . }}-agent.{{ template "jenkins.namespace" . }}.svc.{{.Values.clusterZone}}:{{ .Values.controller.agentListenerPort }}"
-      {{- end }}
-      {{- else }}
-      webSocket: true
-      {{- end }}
-      maxRequestsPerHostStr: {{ .Values.agent.maxRequestsPerHostStr | quote }}
-      name: "{{ .Values.controller.cloudName }}"
-      namespace: "{{ template "jenkins.agent.namespace" . }}"
-      serverUrl: "https://kubernetes.default"
-      {{- if .Values.agent.enabled }}
-      podLabels:
-      - key: "jenkins/{{ .Release.Name }}-{{ .Values.agent.componentName }}"
-        value: "true"
-      templates:
-      {{- include "jenkins.casc.podTemplate" . | nindent 8 }}
-    {{- if .Values.additionalAgents }}
-      {{- /* save .Values.agent */}}
-      {{- $agent := .Values.agent }}
-      {{- range $name, $additionalAgent := .Values.additionalAgents }}
-        {{- /* merge original .Values.agent into additional agent to ensure it at least has the default values */}}
-        {{- $additionalAgent := merge $additionalAgent $agent }}
-        {{- /* set .Values.agent to $additionalAgent */}}
-        {{- $_ := set $.Values "agent" $additionalAgent }}
-        {{- include "jenkins.casc.podTemplate" $ | nindent 8 }}
-      {{- end }}
-      {{- /* restore .Values.agent */}}
-      {{- $_ := set .Values "agent" $agent }}
-    {{- end }}
-      {{- if .Values.agent.podTemplates }}
-        {{- range $key, $val := .Values.agent.podTemplates }}
-          {{- tpl $val $ | nindent 8 }}
-        {{- end }}
-      {{- end }}
-      {{- end }}
   {{- if .Values.controller.csrf.defaultCrumbIssuer.enabled }}
   crumbIssuer:
     standard:
