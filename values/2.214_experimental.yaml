@@ -103,12 +103,26 @@ controller:
                     jobDsl {
                       targets 'jenkinsfiles/seedJob.groovy'
                     }
-                    shell('sleep 15')
-                    jobDsl {
-                      targets 'jenkinsfiles/jobApproval.groovy'
+                  }
+                }
+          - script: |
+              job('Approve scripts') {
+                scm {
+                  git {
+                    remote {
+                      url 'https://github.com/btaylor1987/jenkins-groovy.git'
                     }
                   }
                 }
+                triggers {
+                  upstream('DSL Seed', 'SUCCESS')
+                }
+                steps {
+                  jobDsl {
+                    targets 'jenkinsfiles/jobApproval.groovy'
+                  }
+                }
+              }
         jenkins:
           clouds:
           - kubernetes:
